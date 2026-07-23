@@ -33,7 +33,6 @@ st.markdown("""
     }
     
     #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
     footer {visibility: hidden;}
     
     .stApp {
@@ -144,10 +143,22 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+import base64
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+try:
+    logo_base64 = get_base64_of_bin_file("logo.png")
+    img_tag = f'<img src="data:image/png;base64,{logo_base64}" width="120">'
+except Exception:
+    img_tag = '<img src="https://cdn-icons-png.flaticon.com/512/5155/5155761.png" width="90">'
+
 with st.sidebar:
-    st.markdown("""
+    st.markdown(f"""
         <div class="sidebar-container">
-            <img src="https://cdn-icons-png.flaticon.com/512/5155/5155761.png" width="90">
+            {img_tag}
             <div class="sidebar-title">RepairLink</div>
         </div>
     """, unsafe_allow_html=True)
