@@ -11,8 +11,9 @@ from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, Ch
 from langchain_community.vectorstores import FAISS
 
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
+import requests
 
 # ==========================================
 # 1. Configuration & Document Loading
@@ -60,15 +61,20 @@ hf_token = os.environ.get("HUGGINGFACEHUB_API_TOKEN")
 if not hf_token:
     st.warning("⚠️ HUGGINGFACEHUB_API_TOKEN is not set. The chatbot will not be able to generate responses.")
 
-llm_endpoint = HuggingFaceEndpoint(
-    endpoint_url="https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",
-    task="text-generation",
-    max_new_tokens=150,
-    do_sample=False,
-    repetition_penalty=1.15,
-    return_full_text=False,
-    huggingfacehub_api_token=hf_token,
-)
+def invoke_hf_api(prompt_str):
+    url = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
+    headers = {"Authorization": f"Bearer {hf_token}"}
+    payload = {
+        "inputs": prompt_str.text if hasattr(prompt_str, 'text') else str(prompt_str), 
+        "parameters": {"max_new_tokens": 150, "return_full_text": False}
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        return response.json()[0].get("generated_text", "")
+    else:
+        raise Exception(f"HF API Error {response.status_code}: {response.text}")
+
+llm_endpoint = RunnableLambda(invoke_hf_api)
 # We removed ChatHuggingFace here to force the use of the classic free API endpoint
 
 # ==========================================
