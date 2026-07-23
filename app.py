@@ -1,5 +1,7 @@
-import streamlit as st
 import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -94,7 +96,7 @@ def format_history(history):
 
 st.set_page_config(page_title="RepairLink Support", page_icon="🛠️")
 st.title("🛠️ RepairLink Support")
-st.write("Welcome to our WhatsApp-style automated support system!")
+st.write("Welcome to RepairLink's automated support system!")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
