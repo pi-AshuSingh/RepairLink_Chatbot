@@ -200,16 +200,49 @@ if prompt_text:
             if prompt_text.strip() == "1":
                 st.session_state.chat_state = "TRACK_REPAIR"
                 response = "Please enter your Order ID (e.g., RL-12345):"
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "2":
                 response = "🕒 **Our business hours are:**\n- Monday - Friday: 9 AM to 7 PM\n- Saturday: 10 AM to 5 PM\n- Sunday: Closed\n\n*Type '0' to return to the Main Menu.*"
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "3":
                 st.session_state.chat_state = "CUSTOM_QUESTION"
                 response = "🤖 You are now chatting with our AI Assistant! Ask me anything about our services.\n\n*Type '0' anytime to return to the Main Menu.*"
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
             else:
-                response = "Invalid option. Please type 1, 2, or 3."
+                # If they didn't type 1, 2, or 3, assume they are asking a custom question directly!
+                st.session_state.chat_state = "CUSTOM_QUESTION"
                 
-            message_placeholder.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+                # Format inputs for RAG chain
+                formatted_history = format_history(st.session_state.messages[:-1])
+                inputs = {"question": prompt_text, "history": formatted_history}
+                if not retriever:
+                    inputs["context"] = "No documents available."
+
+                try:
+                    with st.spinner("Thinking..."):
+                        rag_response = rag_chain.invoke(inputs)
+                    
+                    if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
+                        try:
+                            import ast
+                            parsed = ast.literal_eval(rag_response.strip())
+                            if isinstance(parsed, list) and len(parsed) > 0 and 'text' in parsed[0]:
+                                rag_response = parsed[0]['text']
+                        except:
+                            pass
+                            
+                    rag_response += "\n\n*Type '0' to return to the Main Menu.*"
+                    message_placeholder.markdown(rag_response)
+                    st.session_state.messages.append({"role": "assistant", "content": rag_response})
+                    
+                except Exception as e:
+                    error_msg = f"Sorry, I encountered an error: {e}"
+                    message_placeholder.error(error_msg)
+                    if "Authorization" in str(e) or "token" in str(e).lower():
+                        st.error("Please make sure you have a valid GOOGLE_API_KEY set in your environment.")
             
         elif st.session_state.chat_state == "TRACK_REPAIR":
             if prompt_text.strip() == "0":
