@@ -197,8 +197,14 @@ if groq_api_key:
 else:
     llm = None
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful and detailed customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Answer the question thoroughly using ONLY the exact information provided in the context below.\n2. If the user asks for a specific list, provide all items for that list clearly. DO NOT include other lists or information that the user did not explicitly ask for.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.' Do not elaborate.\n\nContext:\n{context}"),
+prompt_free = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. DO NOT provide any artisan locations, coordinates, or contact info. If the user asks for locations or coordinates, say 'I don't know'.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n\nContext:\n{context}"),
+    MessagesPlaceholder(variable_name="history"),
+    ("human", "{question}")
+])
+
+prompt_premium = ChatPromptTemplate.from_messages([
+    ("system", "You are a PREMIUM RepairLink assistant.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. You are AUTHORIZED to provide specific coordinates, addresses, and contact info of artisans from the context.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{question}")
 ])
@@ -210,23 +216,31 @@ if retriever and llm:
     def get_context(inputs):
         return format_docs(retriever.invoke(inputs["question"]))
         
-    rag_chain = (
+    free_rag_chain = (
         RunnablePassthrough.assign(context=get_context)
-        | prompt
+        | prompt_free
+        | llm
+        | StrOutputParser()
+    )
+    premium_rag_chain = (
+        RunnablePassthrough.assign(context=get_context)
+        | prompt_premium
         | llm
         | StrOutputParser()
     )
 elif llm:
-    rag_chain = prompt | llm | StrOutputParser()
+    free_rag_chain = prompt_free | llm | StrOutputParser()
+    premium_rag_chain = prompt_premium | llm | StrOutputParser()
 else:
-    rag_chain = None
+    free_rag_chain = None
+    premium_rag_chain = None
 
 def format_history(history):
     formatted = []
     for msg in history:
         role = msg["role"]
         content = msg["content"]
-        if "Welcome to RepairLink" in content or "Type '0'" in content or "1️⃣" in content:
+        if "Welcome to RepairLink" in content or "Type '0'" in content or "1️⃣" in content or "Pay ₹9" in content:
             continue
         if role == "user":
             formatted.append(HumanMessage(content=content))
@@ -247,7 +261,7 @@ if "messages" not in st.session_state:
 if "chat_state" not in st.session_state:
     st.session_state.chat_state = "MAIN_MENU"
 
-MAIN_MENU_TEXT = """**Welcome to RepairLink!** 👋\n\nPlease choose an option below or ask me a question directly:\n\n**1️⃣** Track my repair status\n**2️⃣** View our business hours\n**3️⃣** Chat with our Support AI\n**4️⃣** Book a new repair\n**5️⃣** View pricing estimates"""
+MAIN_MENU_TEXT = """**Welcome to RepairLink!** 👋\n\nPlease choose an option below or ask me a question directly:\n\n**1️⃣** View our business hours\n**2️⃣** Chat with our Support AI (Free)\n**3️⃣** Find a Local Artisan (Premium)\n**4️⃣** View pricing estimates"""
 
 if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": MAIN_MENU_TEXT})
@@ -260,20 +274,18 @@ prompt_text = st.chat_input("Type your message here...")
 
 if st.session_state.chat_state == "MAIN_MENU":
     st.markdown("<br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3)
-    if col1.button("📍 Track Repair Status", use_container_width=True):
+    col1, col2 = st.columns(2)
+    if col1.button("🕒 View Business Hours", use_container_width=True):
         prompt_text = "1"
-    if col2.button("🕒 View Business Hours", use_container_width=True):
+    if col2.button("🤖 Chat with Support AI (Free)", use_container_width=True):
         prompt_text = "2"
-    if col3.button("🤖 Chat with Support AI", use_container_width=True):
-        prompt_text = "3"
     
     st.markdown("<br>", unsafe_allow_html=True)
-    col4, col5 = st.columns(2)
-    if col4.button("📅 Book a New Repair", use_container_width=True):
+    col3, col4 = st.columns(2)
+    if col3.button("💎 Find a Local Artisan (Premium)", use_container_width=True):
+        prompt_text = "3"
+    if col4.button("💰 View Pricing Estimates", use_container_width=True):
         prompt_text = "4"
-    if col5.button("💰 View Pricing Estimates", use_container_width=True):
-        prompt_text = "5"
 
 if prompt_text:
     st.session_state.messages.append({"role": "user", "content": prompt_text})
@@ -286,26 +298,21 @@ if prompt_text:
         
         if st.session_state.chat_state == "MAIN_MENU":
             if prompt_text.strip() == "1":
-                st.session_state.chat_state = "TRACK_REPAIR"
-                response = "Please enter your **Order ID** (e.g., `RL-12345`):"
-                message_placeholder.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-            elif prompt_text.strip() == "2":
                 response = "🕒 **Our Business Hours:**\n\n*   **Monday - Saturday:** 9:00 AM - 7:00 PM\n*   **Sunday:** Closed\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
-            elif prompt_text.strip() == "3":
+            elif prompt_text.strip() == "2":
                 st.session_state.chat_state = "CUSTOM_QUESTION"
-                response = "🤖 **Support AI Connected!** \n\nI can help answer questions about our services, policies, or provide technical support based on our knowledge base. What would you like to know?\n\n---\n*Type **0** anytime to return to the main menu.*"
+                response = "🤖 **Support AI Connected!** \n\nI can help answer questions about our services and policies. *(Note: Artisan coordinates are only available in Premium)*\n\nWhat would you like to know?\n\n---\n*Type **0** anytime to return to the main menu.*"
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            elif prompt_text.strip() == "3":
+                st.session_state.chat_state = "PREMIUM_PAYMENT"
+                response = "💎 **Unlock Artisan Coordinates**\n\nTo view the exact coordinates, locations, and contact details of our trusted local artisans, you must upgrade to Premium.\n\n**Price:** ₹9 (One-time fee)\n\n*(This is a test environment. Type **Pay ₹9** to simulate the payment, or type **0** to cancel and return to the menu)*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "4":
-                st.session_state.chat_state = "BOOK_REPAIR"
-                response = "Let's get your item fixed! What category does your item belong to?\n\n*   👟 **Shoes & Bags**\n*   👕 **Clothing Alterations**\n*   📱 **Electronics**\n\n*(Type your category below, or type **0** to cancel and return)*"
-                message_placeholder.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-            elif prompt_text.strip() == "5":
-                response = "💰 **RepairLink Pricing Estimates:**\n\nOur psychological pricing architecture scales based on the replacement cost anchor of the item:\n*   **Shoes & Bags:** ₹100 - ₹300\n*   **Clothing Alterations:** ₹100 - ₹250\n*   **Electronics:** ₹1,000 - ₹3,000\n\n*Note: We apply a transparent convenience fee (e.g., ₹30-50 for shoes/bags) added directly on top of the artisan's quote.*\n\n---\n*Type **0** to return to the main menu.*"
+                response = "💰 **RepairLink Pricing Estimates:**\n\nOur psychological pricing architecture scales based on the replacement cost anchor of the item:\n*   **Shoes & Bags:** ₹100 - ₹300\n*   **Clothing Alterations:** ₹100 - ₹250\n*   **Electronics:** ₹1,000 - ₹3,000\n\n*Note: We apply a transparent convenience fee added directly on top of the artisan's quote.*\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
@@ -315,10 +322,64 @@ if prompt_text:
                 if not retriever:
                     inputs["context"] = ""
 
-                if rag_chain:
+                if free_rag_chain:
                     try:
                         with st.spinner("Finding the best answer..."):
-                            rag_response = rag_chain.invoke(inputs)
+                            rag_response = free_rag_chain.invoke(inputs)
+                        
+                        if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
+                            try:
+                                parsed = ast.literal_eval(rag_response.strip())
+                                if isinstance(parsed, list) and len(parsed) > 0 and 'text' in parsed[0]:
+                                    rag_response = parsed[0]['text']
+                            except Exception:
+                                pass
+                        
+                        rag_response += "\n\n---\n*Type **0** to return to the main menu.*"
+                        message_placeholder.markdown(rag_response)
+                        st.session_state.messages.append({"role": "assistant", "content": rag_response})
+                        
+                    except Exception:
+                        message_placeholder.error("I'm currently experiencing high traffic. Please try asking your question again in a moment.")
+                else:
+                    message_placeholder.error("Our support system is currently offline. Please contact us via phone or email.")
+            
+        elif st.session_state.chat_state == "PREMIUM_PAYMENT":
+            if prompt_text.strip() == "0":
+                st.session_state.chat_state = "MAIN_MENU"
+                response = MAIN_MENU_TEXT
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+                st.rerun()
+            elif prompt_text.strip().lower() == "pay ₹9":
+                st.session_state.chat_state = "PREMIUM_CHAT"
+                response = "✅ **Payment Successful!**\n\nYou are now connected to the **Premium Artisan Finder**. I can provide direct coordinates and contact details for our certified artisans. What location or service are you looking for?\n\n---\n*Type **0** to return to the main menu.*"
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            else:
+                response = "⚠️ **Invalid Input**\n\nTo unlock the artisan coordinates, please type **Pay ₹9** to simulate the payment, or type **0** to cancel."
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+
+        elif st.session_state.chat_state in ["CUSTOM_QUESTION", "PREMIUM_CHAT"]:
+            if prompt_text.strip() == "0":
+                st.session_state.chat_state = "MAIN_MENU"
+                response = MAIN_MENU_TEXT
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+                st.rerun()
+            else:
+                formatted_history = format_history(st.session_state.messages[:-1])
+                inputs = {"question": prompt_text, "history": formatted_history}
+                if not retriever:
+                    inputs["context"] = ""
+
+                chain_to_use = premium_rag_chain if st.session_state.chat_state == "PREMIUM_CHAT" else free_rag_chain
+                
+                if chain_to_use:
+                    try:
+                        with st.spinner("Finding the best answer..."):
+                            rag_response = chain_to_use.invoke(inputs)
                         
                         if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
                             try:
@@ -331,102 +392,6 @@ if prompt_text:
                         rag_response += "\n\n---\n*Type **0** to return to the main menu.*"
                         message_placeholder.markdown(rag_response)
                         st.session_state.messages.append({"role": "assistant", "content": rag_response})
-                        
-                    except Exception:
-                        message_placeholder.error("I'm currently experiencing high traffic. Please try asking your question again in a moment.")
-                else:
-                    message_placeholder.error("Our support system is currently offline. Please contact us via phone or email.")
-            
-        elif st.session_state.chat_state == "TRACK_REPAIR":
-            if prompt_text.strip() == "0":
-                st.session_state.chat_state = "MAIN_MENU"
-                response = MAIN_MENU_TEXT
-                message_placeholder.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                st.rerun()
-            else:
-                order_id = prompt_text.strip().upper()
-                if re.match(r'^RL-\d+$', order_id):
-                    response = f"📦 **Order Status:** {order_id}\n\nYour repair is currently: **In Progress**.\n\nWe provide a 90-day warranty on all parts and labor for every repair completed through RepairLink. Expected completion time is **24-48 hours** for artisan repairs.\n\n---\n*Type **0** to return to the main menu.*"
-                    message_placeholder.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                elif len(order_id) <= 8 and " " not in order_id:
-                    response = "❌ **Invalid Order ID**\n\nPlease ensure you are using the correct format: **RL-12345**.\n\n---\n*Type **0** to return to the main menu.*"
-                    message_placeholder.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                else:
-                    st.session_state.chat_state = "CUSTOM_QUESTION"
-                    formatted_history = format_history(st.session_state.messages[:-1])
-                    inputs = {"question": prompt_text, "history": formatted_history}
-                    if not retriever:
-                        inputs["context"] = ""
-
-                    if rag_chain:
-                        try:
-                            with st.spinner("Finding the best answer..."):
-                                rag_response = rag_chain.invoke(inputs)
-                            
-                            if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
-                                try:
-                                    parsed = ast.literal_eval(rag_response.strip())
-                                    if isinstance(parsed, list) and len(parsed) > 0 and 'text' in parsed[0]:
-                                        rag_response = parsed[0]['text']
-                                except Exception:
-                                    pass
-                                    
-                            rag_response += "\n\n---\n*Type **0** to return to the main menu.*"
-                            message_placeholder.markdown(rag_response)
-                            st.session_state.messages.append({"role": "assistant", "content": rag_response})
-                        except Exception:
-                            message_placeholder.error("I'm currently experiencing high traffic. Please try asking your question again in a moment.")
-                    else:
-                        message_placeholder.error("Our support system is currently offline. Please contact us via phone or email.")
-
-        elif st.session_state.chat_state == "BOOK_REPAIR":
-            if prompt_text.strip() == "0":
-                st.session_state.chat_state = "MAIN_MENU"
-                response = MAIN_MENU_TEXT
-                message_placeholder.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                st.rerun()
-            else:
-                st.session_state.chat_state = "MAIN_MENU"
-                import random
-                mock_order_id = f"RL-{random.randint(10000, 99999)}"
-                response = f"✅ **Request Received!**\n\nThank you for choosing to repair rather than replace. We have logged your request for '{prompt_text}'.\n\nYour temporary booking reference is **{mock_order_id}**. One of our tier-3 certified technicians will reach out via the app shortly to confirm the in-app doorstep pickup.\n\n---\n*Type **0** to return to the main menu.*"
-                message_placeholder.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-            
-        elif st.session_state.chat_state == "CUSTOM_QUESTION":
-            if prompt_text.strip() == "0":
-                st.session_state.chat_state = "MAIN_MENU"
-                response = MAIN_MENU_TEXT
-                message_placeholder.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                st.rerun()
-            else:
-                formatted_history = format_history(st.session_state.messages[:-1])
-                inputs = {"question": prompt_text, "history": formatted_history}
-                if not retriever:
-                    inputs["context"] = ""
-
-                if rag_chain:
-                    try:
-                        with st.spinner("Finding the best answer..."):
-                            rag_response = rag_chain.invoke(inputs)
-                        
-                        if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
-                            try:
-                                parsed = ast.literal_eval(rag_response.strip())
-                                if isinstance(parsed, list) and len(parsed) > 0 and 'text' in parsed[0]:
-                                    rag_response = parsed[0]['text']
-                            except Exception:
-                                pass
-                        
-                        rag_response += "\n\n---\n*Type **0** to return to the main menu.*"
-                        message_placeholder.markdown(rag_response)
-                        st.session_state.messages.append({"role": "assistant", "content": rag_response})
-                        
                     except Exception:
                         message_placeholder.error("I'm currently experiencing high traffic. Please try asking your question again in a moment.")
                 else:
