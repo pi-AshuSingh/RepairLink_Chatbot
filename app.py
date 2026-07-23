@@ -61,7 +61,7 @@ if not hf_token:
     st.warning("⚠️ HUGGINGFACEHUB_API_TOKEN is not set. The chatbot will not be able to generate responses.")
 
 llm_endpoint = HuggingFaceEndpoint(
-    repo_id="HuggingFaceH4/zephyr-7b-beta",
+    endpoint_url="https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",
     task="text-generation",
     max_new_tokens=150,
     do_sample=False,
