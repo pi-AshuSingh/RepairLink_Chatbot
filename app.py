@@ -102,6 +102,9 @@ def format_history(history):
     for msg in history:
         role = msg["role"]
         content = msg["content"]
+        # Skip injecting our own menu-system prompts into the LLM history so it doesn't get confused
+        if "Welcome to RepairLink" in content or "Type '0'" in content or "1️⃣" in content:
+            continue
         if role == "user":
             formatted.append(HumanMessage(content=content))
         elif role == "assistant":
@@ -109,19 +112,24 @@ def format_history(history):
     return formatted
 
 # Streamlit Page Config
-st.set_page_config(
-    page_title="RepairLink Support",
-    page_icon="🛠️",
-    layout="centered"
-)
-
-# Header
+st.set_page_config(page_title="RepairLink Support", page_icon="🛠️")
 st.title("🛠️ RepairLink Support")
-st.caption("Ask questions about RepairLink's services and strategies.")
+st.write("Welcome to our WhatsApp-style automated support system!")
 
-# Initialize chat history
+# Initialize chat history and state
 if "messages" not in st.session_state:
     st.session_state.messages = []
+    
+if "chat_state" not in st.session_state:
+    st.session_state.chat_state = "MAIN_MENU"
+
+MAIN_MENU_TEXT = """Please select an option by typing the corresponding number:
+1️⃣ Track my repair
+2️⃣ View business hours
+3️⃣ Ask a custom question to our AI Assistant"""
+
+if not st.session_state.messages:
+    st.session_state.messages.append({"role": "assistant", "content": MAIN_MENU_TEXT})
 
 # Display chat messages from history on app rerun
 for message in st.session_state.messages:
@@ -129,29 +137,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Accept user input
-example_questions = [
-    "What repair services do you offer?",
-    "How long does a typical repair take?",
-    "Do you offer a warranty?"
-]
-
-if "quick_question" not in st.session_state:
-    st.session_state.quick_question = None
-
-# Show buttons only if no prompt is currently processing
-st.markdown("<br>", unsafe_allow_html=True)
-cols = st.columns(len(example_questions))
-for i, q in enumerate(example_questions):
-    if cols[i].button(q, use_container_width=True):
-        st.session_state.quick_question = q
-
-prompt_text = st.chat_input("Type your question here...")
-
-if st.session_state.quick_question:
-    prompt_text = st.session_state.quick_question
-    st.session_state.quick_question = None
-
-if prompt_text:
+if prompt_text := st.chat_input("Type your message here..."):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt_text})
     # Display user message in chat message container
@@ -161,34 +147,68 @@ if prompt_text:
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
+        response = ""
         
-        # Format inputs for RAG chain
-        formatted_history = format_history(st.session_state.messages[:-1]) # exclude current message
-        inputs = {"question": prompt_text, "history": formatted_history}
-        if not retriever:
-            inputs["context"] = "No documents available."
-
-        try:
-            with st.spinner("Thinking..."):
-                response = rag_chain.invoke(inputs)
-            
-            # Clean up response if needed
-            if isinstance(response, str) and response.strip().startswith("[{'text':"):
-                try:
-                    import ast
-                    parsed = ast.literal_eval(response.strip())
-                    if isinstance(parsed, list) and len(parsed) > 0 and 'text' in parsed[0]:
-                        response = parsed[0]['text']
-                except:
-                    pass
-                    
+        # State Machine Logic
+        if st.session_state.chat_state == "MAIN_MENU":
+            if prompt_text.strip() == "1":
+                st.session_state.chat_state = "TRACK_REPAIR"
+                response = "Please enter your Order ID (e.g., RL-12345):"
+            elif prompt_text.strip() == "2":
+                response = "🕒 **Our business hours are:**\n- Monday - Friday: 9 AM to 7 PM\n- Saturday: 10 AM to 5 PM\n- Sunday: Closed\n\n*Type '0' to return to the Main Menu.*"
+            elif prompt_text.strip() == "3":
+                st.session_state.chat_state = "CUSTOM_QUESTION"
+                response = "🤖 You are now chatting with our AI Assistant! Ask me anything about our services.\n\n*Type '0' anytime to return to the Main Menu.*"
+            else:
+                response = "Invalid option. Please type 1, 2, or 3."
+                
             message_placeholder.markdown(response)
-            
-            # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": response})
             
-        except Exception as e:
-            error_msg = f"Sorry, I encountered an error: {e}"
-            message_placeholder.error(error_msg)
-            if "Authorization" in str(e) or "token" in str(e).lower():
-                st.error("Please make sure you have a valid HUGGINGFACEHUB_API_TOKEN set in your environment.")
+        elif st.session_state.chat_state == "TRACK_REPAIR":
+            if prompt_text.strip() == "0":
+                st.session_state.chat_state = "MAIN_MENU"
+                response = MAIN_MENU_TEXT
+            else:
+                # Mock tracking response
+                order_id = prompt_text.strip().upper()
+                response = f"📦 Order **{order_id}** is currently: **In Progress**.\nIt should be ready in 1-2 business days.\n\n*Type '0' to return to the Main Menu.*"
+            
+            message_placeholder.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            
+        elif st.session_state.chat_state == "CUSTOM_QUESTION":
+            if prompt_text.strip() == "0":
+                st.session_state.chat_state = "MAIN_MENU"
+                response = MAIN_MENU_TEXT
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            else:
+                # Format inputs for RAG chain
+                formatted_history = format_history(st.session_state.messages[:-1]) # exclude current message
+                inputs = {"question": prompt_text, "history": formatted_history}
+                if not retriever:
+                    inputs["context"] = "No documents available."
+
+                try:
+                    with st.spinner("Thinking..."):
+                        rag_response = rag_chain.invoke(inputs)
+                    
+                    # Clean up response if needed
+                    if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
+                        try:
+                            import ast
+                            parsed = ast.literal_eval(rag_response.strip())
+                            if isinstance(parsed, list) and len(parsed) > 0 and 'text' in parsed[0]:
+                                rag_response = parsed[0]['text']
+                        except:
+                            pass
+                            
+                    message_placeholder.markdown(rag_response)
+                    st.session_state.messages.append({"role": "assistant", "content": rag_response})
+                    
+                except Exception as e:
+                    error_msg = f"Sorry, I encountered an error: {e}"
+                    message_placeholder.error(error_msg)
+                    if "Authorization" in str(e) or "token" in str(e).lower():
+                        st.error("Please make sure you have a valid GOOGLE_API_KEY set in your environment.")
