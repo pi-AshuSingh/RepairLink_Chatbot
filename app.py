@@ -7,7 +7,7 @@ load_dotenv()
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings, ChatHuggingFace
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, ChatHuggingFace
 from langchain_community.vectorstores import FAISS
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -61,9 +61,19 @@ hf_token = os.environ.get("HUGGINGFACEHUB_API_TOKEN")
 if not hf_token:
     st.warning("⚠️ HUGGINGFACEHUB_API_TOKEN is not set. The chatbot will not be able to generate responses.")
 
-llm = ChatHuggingFace(
-    model_id="HuggingFaceH4/zephyr-7b-beta",
+llm_endpoint = HuggingFaceEndpoint(
+    repo_id="HuggingFaceH4/zephyr-7b-beta",
+    task="text-generation", # Required by HuggingFaceEndpoint, but ChatHuggingFace will override this by hitting the chat completions API
+    max_new_tokens=150,
+    do_sample=False,
+    repetition_penalty=1.15,
+    return_full_text=False,
     huggingfacehub_api_token=hf_token,
+)
+
+llm = ChatHuggingFace(
+    llm=llm_endpoint,
+    model_id="HuggingFaceH4/zephyr-7b-beta"
 )
 
 # ==========================================
