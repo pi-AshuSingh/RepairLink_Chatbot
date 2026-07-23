@@ -7,13 +7,13 @@ load_dotenv()
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, ChatHuggingFace
+from langchain_huggingface import HuggingFaceEmbeddings, ChatHuggingFace
 from langchain_community.vectorstores import FAISS
 
-from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
-import requests
+from langchain_core.messages import HumanMessage, AIMessage
 
 # ==========================================
 # 1. Configuration & Document Loading
@@ -61,41 +61,19 @@ hf_token = os.environ.get("HUGGINGFACEHUB_API_TOKEN")
 if not hf_token:
     st.warning("⚠️ HUGGINGFACEHUB_API_TOKEN is not set. The chatbot will not be able to generate responses.")
 
-def invoke_hf_api(prompt_str):
-    url = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
-    headers = {"Authorization": f"Bearer {hf_token}"}
-    payload = {
-        "inputs": prompt_str.text if hasattr(prompt_str, 'text') else str(prompt_str), 
-        "parameters": {"max_new_tokens": 150, "return_full_text": False}
-    }
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        return response.json()[0].get("generated_text", "")
-    else:
-        raise Exception(f"HF API Error {response.status_code}: {response.text}")
-
-llm_endpoint = RunnableLambda(invoke_hf_api)
-# We removed ChatHuggingFace here to force the use of the classic free API endpoint
+llm = ChatHuggingFace(
+    model_id="HuggingFaceH4/zephyr-7b-beta",
+    huggingfacehub_api_token=hf_token,
+)
 
 # ==========================================
 # 4. RAG Prompt & Chain
 # ==========================================
-template = """<|system|>
-You are a helpful customer support assistant for RepairLink. 
-CRITICAL RULES:
-1. Keep your answers EXTREMELY short and concise (1-2 sentences maximum).
-2. Answer the question using ONLY the exact information provided in the context below. 
-3. If the answer is not in the context, say "I don't know." Do not elaborate.</s>
-{history}
-<|user|>
-Context:
-{context}
-
-Question:
-{question}</s>
-<|assistant|>
-"""
-prompt = PromptTemplate.from_template(template)
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Keep your answers EXTREMELY short and concise (1-2 sentences maximum).\n2. Answer the question using ONLY the exact information provided in the context below.\n3. If the answer is not in the context, say 'I don't know.' Do not elaborate.\n\nContext:\n{context}"),
+    MessagesPlaceholder(variable_name="history"),
+    ("human", "{question}")
+])
 
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
@@ -107,25 +85,25 @@ if retriever:
     rag_chain = (
         RunnablePassthrough.assign(context=get_context)
         | prompt
-        | llm_endpoint
+        | llm
         | StrOutputParser()
     )
 else:
     # Fallback if no documents are uploaded
-    rag_chain = prompt | llm_endpoint | StrOutputParser()
+    rag_chain = prompt | llm | StrOutputParser()
 
 # ==========================================
 # 5. Streamlit Interface
 # ==========================================
 def format_history(history):
-    formatted = ""
+    formatted = []
     for msg in history:
         role = msg["role"]
         content = msg["content"]
         if role == "user":
-            formatted += f"<|user|>\n{content}</s>\n"
+            formatted.append(HumanMessage(content=content))
         elif role == "assistant":
-            formatted += f"<|assistant|>\n{content}</s>\n"
+            formatted.append(AIMessage(content=content))
     return formatted
 
 # Streamlit Page Config
