@@ -248,17 +248,48 @@ if prompt_text:
             if prompt_text.strip() == "0":
                 st.session_state.chat_state = "MAIN_MENU"
                 response = MAIN_MENU_TEXT
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
             else:
                 import re
                 order_id = prompt_text.strip().upper()
-                if not re.match(r'^RL-\d+$', order_id):
-                    response = "❌ **Invalid Order ID format.**\nPlease use the format **RL-12345** (e.g., RL-567).\n\n*Type '0' to return to the Main Menu.*"
-                else:
+                if re.match(r'^RL-\d+$', order_id):
                     # Mock tracking response
                     response = f"📦 Order **{order_id}** is currently: **In Progress**.\nIt should be ready in 1-2 business days.\n\n*Type '0' to return to the Main Menu.*"
-            
-            message_placeholder.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+                    message_placeholder.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                elif len(order_id) <= 8 and " " not in order_id:
+                    # Looks like a botched order ID (e.g., "98" or "RL")
+                    response = "❌ **Invalid Order ID format.**\nPlease use the format **RL-12345** (e.g., RL-567).\n\n*Type '0' to return to the Main Menu.*"
+                    message_placeholder.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    # It's a sentence or question! Auto-route to CUSTOM_QUESTION
+                    st.session_state.chat_state = "CUSTOM_QUESTION"
+                    formatted_history = format_history(st.session_state.messages[:-1])
+                    inputs = {"question": prompt_text, "history": formatted_history}
+                    if not retriever:
+                        inputs["context"] = "No documents available."
+
+                    try:
+                        with st.spinner("Thinking..."):
+                            rag_response = rag_chain.invoke(inputs)
+                        
+                        if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
+                            try:
+                                import ast
+                                parsed = ast.literal_eval(rag_response.strip())
+                                if isinstance(parsed, list) and len(parsed) > 0 and 'text' in parsed[0]:
+                                    rag_response = parsed[0]['text']
+                            except:
+                                pass
+                                
+                        rag_response += "\n\n*Type '0' to return to the Main Menu.*"
+                        message_placeholder.markdown(rag_response)
+                        st.session_state.messages.append({"role": "assistant", "content": rag_response})
+                    except Exception as e:
+                        error_msg = f"Sorry, I encountered an error: {e}"
+                        message_placeholder.error(error_msg)
             
         elif st.session_state.chat_state == "CUSTOM_QUESTION":
             if prompt_text.strip() == "0":
