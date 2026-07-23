@@ -63,7 +63,7 @@ if not google_api_key:
     st.warning("⚠️ GOOGLE_API_KEY is not set. The chatbot will not be able to generate responses.")
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+    model="gemini-3.5-flash",
     google_api_key=google_api_key,
     temperature=0.3,
 )
