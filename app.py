@@ -61,7 +61,7 @@ if not hf_token:
     st.warning("⚠️ HUGGINGFACEHUB_API_TOKEN is not set. The chatbot will not be able to generate responses.")
 
 llm_endpoint = HuggingFaceEndpoint(
-    repo_id="Qwen/Qwen2.5-72B-Instruct",
+    repo_id="Qwen/Qwen2.5-7B-Instruct",
     task="text-generation",
     max_new_tokens=150,
     do_sample=False,
