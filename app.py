@@ -72,7 +72,7 @@ llm = ChatGoogleGenerativeAI(
 # 4. RAG Prompt & Chain
 # ==========================================
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful and detailed customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Answer the question thoroughly using ONLY the exact information provided in the context below.\n2. If the user asks for a list or details (like the 5 Cs), provide all of them clearly.\n3. If the answer is not in the context, say 'I don't know.' Do not elaborate.\n\nContext:\n{context}"),
+    ("system", "You are a helpful and detailed customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Answer the question thoroughly using ONLY the exact information provided in the context below.\n2. If the user asks for a specific list, provide all items for that list clearly. DO NOT include other lists or information that the user did not explicitly ask for.\n3. If the answer is not in the context, say 'I don't know.' Do not elaborate.\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{question}")
 ])
