@@ -61,7 +61,7 @@ if not hf_token:
     st.warning("⚠️ HUGGINGFACEHUB_API_TOKEN is not set. The chatbot will not be able to generate responses.")
 
 llm_endpoint = HuggingFaceEndpoint(
-    repo_id="Qwen/Qwen2.5-7B-Instruct",
+    repo_id="HuggingFaceH4/zephyr-7b-beta",
     task="text-generation",
     max_new_tokens=150,
     do_sample=False,
@@ -74,21 +74,20 @@ llm = ChatHuggingFace(llm=llm_endpoint)
 # ==========================================
 # 4. RAG Prompt & Chain
 # ==========================================
-template = """<|im_start|>system
+template = """<|system|>
 You are a helpful customer support assistant for RepairLink. 
 CRITICAL RULES:
 1. Keep your answers EXTREMELY short and concise (1-2 sentences maximum).
 2. Answer the question using ONLY the exact information provided in the context below. 
-3. If the answer is not in the context, say "I don't know." Do not elaborate.
-<|im_end|>
+3. If the answer is not in the context, say "I don't know." Do not elaborate.</s>
 {history}
-<|im_start|>user
+<|user|>
 Context:
 {context}
 
 Question:
-{question}<|im_end|>
-<|im_start|>assistant
+{question}</s>
+<|assistant|>
 """
 prompt = PromptTemplate.from_template(template)
 
@@ -118,9 +117,9 @@ def format_history(history):
         role = msg["role"]
         content = msg["content"]
         if role == "user":
-            formatted += f"<|im_start|>user\n{content}<|im_end|>\n"
+            formatted += f"<|user|>\n{content}</s>\n"
         elif role == "assistant":
-            formatted += f"<|im_start|>assistant\n{content}<|im_end|>\n"
+            formatted += f"<|assistant|>\n{content}</s>\n"
     return formatted
 
 # Streamlit Page Config
