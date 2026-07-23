@@ -8,7 +8,7 @@ load_dotenv()
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_community.vectorstores import FAISS
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -54,17 +54,17 @@ else:
     retriever = None
 
 # ==========================================
-# 3. LLM Setup (Google Gemini API)
+# 3. LLM Setup (Groq API)
 # ==========================================
-# Make sure GOOGLE_API_KEY is set in your environment or .env file
-google_api_key = os.environ.get("GOOGLE_API_KEY")
+# Make sure GROQ_API_KEY is set in your environment or .env file
+groq_api_key = os.environ.get("GROQ_API_KEY")
 
-if not google_api_key:
-    st.warning("⚠️ GOOGLE_API_KEY is not set. The chatbot will not be able to generate responses.")
+if not groq_api_key:
+    st.warning("⚠️ GROQ_API_KEY is not set. The chatbot will not be able to generate responses.")
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash",
-    google_api_key=google_api_key,
+llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    groq_api_key=groq_api_key,
     temperature=0.3,
 )
 
@@ -241,8 +241,8 @@ if prompt_text:
                 except Exception as e:
                     error_msg = f"Sorry, I encountered an error: {e}"
                     message_placeholder.error(error_msg)
-                    if "Authorization" in str(e) or "token" in str(e).lower():
-                        st.error("Please make sure you have a valid GOOGLE_API_KEY set in your environment.")
+                    if "Authorization" in str(e) or "token" in str(e).lower() or "api_key" in str(e).lower():
+                        st.error("Please make sure you have a valid GROQ_API_KEY set in your environment.")
             
         elif st.session_state.chat_state == "TRACK_REPAIR":
             if prompt_text.strip() == "0":
@@ -324,5 +324,5 @@ if prompt_text:
                 except Exception as e:
                     error_msg = f"Sorry, I encountered an error: {e}"
                     message_placeholder.error(error_msg)
-                    if "Authorization" in str(e) or "token" in str(e).lower():
-                        st.error("Please make sure you have a valid GOOGLE_API_KEY set in your environment.")
+                    if "Authorization" in str(e) or "token" in str(e).lower() or "api_key" in str(e).lower():
+                        st.error("Please make sure you have a valid GROQ_API_KEY set in your environment.")

@@ -7,4 +7,4 @@ faiss-cpu
 pypdf
 streamlit
 python-dotenv
-langchain-google-genai
+langchain-groq
