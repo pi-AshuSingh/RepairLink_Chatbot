@@ -38,8 +38,8 @@ print(f"📄 Total document pages/elements loaded: {len(documents)}")
 # 2. Text Splitting & Embeddings
 # ==========================================
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=500,
-    chunk_overlap=80
+    chunk_size=1500,
+    chunk_overlap=200
 )
 docs = text_splitter.split_documents(documents)
 
