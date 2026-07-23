@@ -72,7 +72,7 @@ llm = ChatGoogleGenerativeAI(
 # 4. RAG Prompt & Chain
 # ==========================================
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Keep your answers EXTREMELY short and concise (1-2 sentences maximum).\n2. Answer the question using ONLY the exact information provided in the context below.\n3. If the answer is not in the context, say 'I don't know.' Do not elaborate.\n\nContext:\n{context}"),
+    ("system", "You are a helpful and detailed customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Answer the question thoroughly using ONLY the exact information provided in the context below.\n2. If the user asks for a list or details (like the 5 Cs), provide all of them clearly.\n3. If the answer is not in the context, say 'I don't know.' Do not elaborate.\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{question}")
 ])
@@ -249,9 +249,13 @@ if prompt_text:
                 st.session_state.chat_state = "MAIN_MENU"
                 response = MAIN_MENU_TEXT
             else:
-                # Mock tracking response
+                import re
                 order_id = prompt_text.strip().upper()
-                response = f"📦 Order **{order_id}** is currently: **In Progress**.\nIt should be ready in 1-2 business days.\n\n*Type '0' to return to the Main Menu.*"
+                if not re.match(r'^RL-\d+$', order_id):
+                    response = "❌ **Invalid Order ID format.**\nPlease use the format **RL-12345** (e.g., RL-567).\n\n*Type '0' to return to the Main Menu.*"
+                else:
+                    # Mock tracking response
+                    response = f"📦 Order **{order_id}** is currently: **In Progress**.\nIt should be ready in 1-2 business days.\n\n*Type '0' to return to the Main Menu.*"
             
             message_placeholder.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
