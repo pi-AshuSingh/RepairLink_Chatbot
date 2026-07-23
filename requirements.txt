@@ -8,3 +8,4 @@ pypdf
 streamlit
 python-dotenv
 langchain-groq
+torchvision
