@@ -2,7 +2,6 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 from langchain_community.document_loaders import PyPDFLoader
@@ -16,9 +15,6 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import HumanMessage, AIMessage
 
-# ==========================================
-# 1. Configuration & Document Loading
-# ==========================================
 KNOWLEDGE_BASE = "RepairLink_KnowledgeBase_RAG.pdf"
 
 print("Loading knowledge base...")
@@ -34,9 +30,6 @@ else:
 
 print(f"📄 Total document pages/elements loaded: {len(documents)}")
 
-# ==========================================
-# 2. Text Splitting & Embeddings
-# ==========================================
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1500,
     chunk_overlap=200
@@ -53,10 +46,6 @@ else:
     print("⚠️ No documents loaded! RAG will not have context.")
     retriever = None
 
-# ==========================================
-# 3. LLM Setup (Groq API)
-# ==========================================
-# Make sure GROQ_API_KEY is set in your environment or .env file
 groq_api_key = os.environ.get("GROQ_API_KEY")
 
 if not groq_api_key:
@@ -68,9 +57,6 @@ llm = ChatGroq(
     temperature=0.3,
 )
 
-# ==========================================
-# 4. RAG Prompt & Chain
-# ==========================================
 prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a helpful and detailed customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Answer the question thoroughly using ONLY the exact information provided in the context below.\n2. If the user asks for a specific list, provide all items for that list clearly. DO NOT include other lists or information that the user did not explicitly ask for.\n3. If the answer is not in the context, say 'I don't know.' Do not elaborate.\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
@@ -91,18 +77,13 @@ if retriever:
         | StrOutputParser()
     )
 else:
-    # Fallback if no documents are uploaded
     rag_chain = prompt | llm | StrOutputParser()
 
-# ==========================================
-# 5. Streamlit Interface
-# ==========================================
 def format_history(history):
     formatted = []
     for msg in history:
         role = msg["role"]
         content = msg["content"]
-        # Skip injecting our own menu-system prompts into the LLM history so it doesn't get confused
         if "Welcome to RepairLink" in content or "Type '0'" in content or "1️⃣" in content:
             continue
         if role == "user":
@@ -111,12 +92,10 @@ def format_history(history):
             formatted.append(AIMessage(content=content))
     return formatted
 
-# Streamlit Page Config
 st.set_page_config(page_title="RepairLink Support", page_icon="🛠️")
 st.title("🛠️ RepairLink Support")
 st.write("Welcome to our WhatsApp-style automated support system!")
 
-# Initialize chat history and state
 if "messages" not in st.session_state:
     st.session_state.messages = []
     
@@ -131,48 +110,51 @@ MAIN_MENU_TEXT = """Please select an option by typing the corresponding number:
 if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": MAIN_MENU_TEXT})
 
-# Display chat messages from history on app rerun
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Custom WhatsApp-style CSS
 st.markdown("""
 <style>
-    /* WhatsApp Green Theme for Buttons */
+    .stApp {
+        background-color: #efeae2;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
     div.stButton > button:first-child {
-        background-color: #25D366;
+        background-color: #00a884;
         color: white;
-        border-radius: 20px;
+        border-radius: 24px;
         border: none;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        font-weight: bold;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        font-weight: 600;
+        transition: background-color 0.2s;
     }
     div.stButton > button:hover {
-        background-color: #128C7E;
+        background-color: #008f6f;
         color: white;
     }
-    
-    /* WhatsApp Chat Bubble Styling */
     [data-testid="stChatMessage"] {
-        border-radius: 15px;
-        padding: 10px;
-        margin-bottom: 10px;
+        border-radius: 12px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        font-size: 15px;
     }
     [data-testid="stChatMessage"][data-baseweb="card"]:nth-child(even) {
-        background-color: #DCF8C6 !important; /* User bubble (light green) */
+        background-color: #d9fdd3 !important;
+        margin-left: 20%;
+        border-top-right-radius: 0px;
     }
     [data-testid="stChatMessage"][data-baseweb="card"]:nth-child(odd) {
-        background-color: #FFFFFF !important; /* Assistant bubble (white) */
-        border: 1px solid #E0E0E0;
+        background-color: #ffffff !important;
+        margin-right: 20%;
+        border-top-left-radius: 0px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Accept user input
 prompt_text = st.chat_input("Type your message here...")
 
-# Inject clickable option buttons if the user is in the MAIN_MENU state
 if st.session_state.chat_state == "MAIN_MENU":
     st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
@@ -184,18 +166,14 @@ if st.session_state.chat_state == "MAIN_MENU":
         prompt_text = "3"
 
 if prompt_text:
-    # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt_text})
-    # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt_text)
 
-    # Display assistant response in chat message container
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         response = ""
         
-        # State Machine Logic
         if st.session_state.chat_state == "MAIN_MENU":
             if prompt_text.strip() == "1":
                 st.session_state.chat_state = "TRACK_REPAIR"
@@ -212,10 +190,8 @@ if prompt_text:
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
-                # If they didn't type 1, 2, or 3, assume they are asking a custom question directly!
                 st.session_state.chat_state = "CUSTOM_QUESTION"
                 
-                # Format inputs for RAG chain
                 formatted_history = format_history(st.session_state.messages[:-1])
                 inputs = {"question": prompt_text, "history": formatted_history}
                 if not retriever:
@@ -254,17 +230,14 @@ if prompt_text:
                 import re
                 order_id = prompt_text.strip().upper()
                 if re.match(r'^RL-\d+$', order_id):
-                    # Mock tracking response
                     response = f"📦 Order **{order_id}** is currently: **In Progress**.\nIt should be ready in 1-2 business days.\n\n*Type '0' to return to the Main Menu.*"
                     message_placeholder.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 elif len(order_id) <= 8 and " " not in order_id:
-                    # Looks like a botched order ID (e.g., "98" or "RL")
                     response = "❌ **Invalid Order ID format.**\nPlease use the format **RL-12345** (e.g., RL-567).\n\n*Type '0' to return to the Main Menu.*"
                     message_placeholder.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 else:
-                    # It's a sentence or question! Auto-route to CUSTOM_QUESTION
                     st.session_state.chat_state = "CUSTOM_QUESTION"
                     formatted_history = format_history(st.session_state.messages[:-1])
                     inputs = {"question": prompt_text, "history": formatted_history}
@@ -298,7 +271,6 @@ if prompt_text:
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
-                # Format inputs for RAG chain
                 formatted_history = format_history(st.session_state.messages[:-1]) # exclude current message
                 inputs = {"question": prompt_text, "history": formatted_history}
                 if not retriever:
@@ -308,7 +280,6 @@ if prompt_text:
                     with st.spinner("Thinking..."):
                         rag_response = rag_chain.invoke(inputs)
                     
-                    # Clean up response if needed
                     if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
                         try:
                             import ast
