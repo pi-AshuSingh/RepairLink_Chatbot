@@ -129,7 +129,29 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Accept user input
-if prompt_text := st.chat_input("Type your question here..."):
+example_questions = [
+    "What repair services do you offer?",
+    "How do I track my repair?",
+    "What are your business hours?"
+]
+
+if "quick_question" not in st.session_state:
+    st.session_state.quick_question = None
+
+# Show buttons only if no prompt is currently processing
+st.markdown("<br>", unsafe_allow_html=True)
+cols = st.columns(len(example_questions))
+for i, q in enumerate(example_questions):
+    if cols[i].button(q, use_container_width=True):
+        st.session_state.quick_question = q
+
+prompt_text = st.chat_input("Type your question here...")
+
+if st.session_state.quick_question:
+    prompt_text = st.session_state.quick_question
+    st.session_state.quick_question = None
+
+if prompt_text:
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt_text})
     # Display user message in chat message container
