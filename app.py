@@ -136,8 +136,54 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# Custom WhatsApp-style CSS
+st.markdown("""
+<style>
+    /* WhatsApp Green Theme for Buttons */
+    div.stButton > button:first-child {
+        background-color: #25D366;
+        color: white;
+        border-radius: 20px;
+        border: none;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        font-weight: bold;
+    }
+    div.stButton > button:hover {
+        background-color: #128C7E;
+        color: white;
+    }
+    
+    /* WhatsApp Chat Bubble Styling */
+    [data-testid="stChatMessage"] {
+        border-radius: 15px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    [data-testid="stChatMessage"][data-baseweb="card"]:nth-child(even) {
+        background-color: #DCF8C6 !important; /* User bubble (light green) */
+    }
+    [data-testid="stChatMessage"][data-baseweb="card"]:nth-child(odd) {
+        background-color: #FFFFFF !important; /* Assistant bubble (white) */
+        border: 1px solid #E0E0E0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Accept user input
-if prompt_text := st.chat_input("Type your message here..."):
+prompt_text = st.chat_input("Type your message here...")
+
+# Inject clickable option buttons if the user is in the MAIN_MENU state
+if st.session_state.chat_state == "MAIN_MENU":
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    if col1.button("1️⃣ Track my repair", use_container_width=True):
+        prompt_text = "1"
+    if col2.button("2️⃣ View business hours", use_container_width=True):
+        prompt_text = "2"
+    if col3.button("3️⃣ Ask AI Assistant", use_container_width=True):
+        prompt_text = "3"
+
+if prompt_text:
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt_text})
     # Display user message in chat message container
