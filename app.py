@@ -7,7 +7,8 @@ load_dotenv()
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, ChatHuggingFace
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -53,27 +54,18 @@ else:
     retriever = None
 
 # ==========================================
-# 3. LLM Setup (HuggingFace Serverless API)
+# 3. LLM Setup (Google Gemini API)
 # ==========================================
-# Make sure HUGGINGFACEHUB_API_TOKEN is set in your environment or .env file
-hf_token = os.environ.get("HUGGINGFACEHUB_API_TOKEN")
+# Make sure GOOGLE_API_KEY is set in your environment or .env file
+google_api_key = os.environ.get("GOOGLE_API_KEY")
 
-if not hf_token:
-    st.warning("⚠️ HUGGINGFACEHUB_API_TOKEN is not set. The chatbot will not be able to generate responses.")
+if not google_api_key:
+    st.warning("⚠️ GOOGLE_API_KEY is not set. The chatbot will not be able to generate responses.")
 
-llm_endpoint = HuggingFaceEndpoint(
-    repo_id="Qwen/Qwen2.5-1.5B-Instruct",
-    task="text-generation", # Required by HuggingFaceEndpoint, but ChatHuggingFace will override this by hitting the chat completions API
-    max_new_tokens=150,
-    do_sample=False,
-    repetition_penalty=1.15,
-    return_full_text=False,
-    huggingfacehub_api_token=hf_token,
-)
-
-llm = ChatHuggingFace(
-    llm=llm_endpoint,
-    model_id="Qwen/Qwen2.5-1.5B-Instruct"
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash",
+    google_api_key=google_api_key,
+    temperature=0.3,
 )
 
 # ==========================================
