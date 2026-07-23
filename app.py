@@ -62,7 +62,7 @@ if not hf_token:
     st.warning("⚠️ HUGGINGFACEHUB_API_TOKEN is not set. The chatbot will not be able to generate responses.")
 
 llm_endpoint = HuggingFaceEndpoint(
-    repo_id="HuggingFaceH4/zephyr-7b-beta",
+    repo_id="Qwen/Qwen2.5-1.5B-Instruct",
     task="text-generation", # Required by HuggingFaceEndpoint, but ChatHuggingFace will override this by hitting the chat completions API
     max_new_tokens=150,
     do_sample=False,
@@ -73,7 +73,7 @@ llm_endpoint = HuggingFaceEndpoint(
 
 llm = ChatHuggingFace(
     llm=llm_endpoint,
-    model_id="HuggingFaceH4/zephyr-7b-beta"
+    model_id="Qwen/Qwen2.5-1.5B-Instruct"
 )
 
 # ==========================================
