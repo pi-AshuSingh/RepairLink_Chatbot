@@ -131,8 +131,8 @@ for message in st.session_state.messages:
 # Accept user input
 example_questions = [
     "What repair services do you offer?",
-    "How do I track my repair?",
-    "What are your business hours?"
+    "How long does a typical repair take?",
+    "Do you offer a warranty?"
 ]
 
 if "quick_question" not in st.session_state:
