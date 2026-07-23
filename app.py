@@ -69,7 +69,7 @@ llm_endpoint = HuggingFaceEndpoint(
     return_full_text=False,
     huggingfacehub_api_token=hf_token,
 )
-llm = ChatHuggingFace(llm=llm_endpoint)
+# We removed ChatHuggingFace here to force the use of the classic free API endpoint
 
 # ==========================================
 # 4. RAG Prompt & Chain
@@ -101,12 +101,12 @@ if retriever:
     rag_chain = (
         RunnablePassthrough.assign(context=get_context)
         | prompt
-        | llm
+        | llm_endpoint
         | StrOutputParser()
     )
 else:
     # Fallback if no documents are uploaded
-    rag_chain = prompt | llm | StrOutputParser()
+    rag_chain = prompt | llm_endpoint | StrOutputParser()
 
 # ==========================================
 # 5. Streamlit Interface
