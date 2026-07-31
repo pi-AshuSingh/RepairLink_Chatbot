@@ -26,77 +26,85 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap');
     
     html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-family: 'Manrope', sans-serif;
+        color: #221D14;
     }
     
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
     .stApp {
-        background-color: #f4f7f6;
+        background-color: #EDE7D8;
     }
     
     [data-testid="stSidebar"] {
-        background-color: #ffffff;
-        border-right: 1px solid #eef2f5;
+        background-color: #FFFFFF;
+        border-right: 1px solid rgba(34,29,20,0.14);
         padding-top: 1rem;
     }
     
     div.stButton > button:first-child {
-        background: #ffffff;
-        color: #0f172a;
-        border-radius: 14px;
-        border: 1px solid #d1d5db;
+        background: #FFB800;
+        color: #2A1E00;
+        border-radius: 12px;
+        border: none;
         padding: 0.8rem 1rem;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
-        font-weight: 600;
+        box-shadow: 0 4px 14px rgba(34,29,20,0.15);
+        font-weight: 700;
         font-size: 0.95rem;
         transition: all 0.3s ease;
         height: auto;
     }
     
     div.stButton > button:hover {
-        border-color: #059669;
-        color: #059669;
-        box-shadow: 0 8px 15px -3px rgba(5, 150, 105, 0.15);
+        background: #ffc935;
+        color: #2A1E00;
+        box-shadow: 0 6px 15px rgba(34,29,20,0.1);
         transform: translateY(-2px);
     }
 
     [data-testid="stChatInput"] {
-        border-radius: 20px !important;
-        border: 1px solid #d1d5db !important;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
+        border-radius: 99px !important;
+        border: 1px solid rgba(34,29,20,0.14) !important;
+        box-shadow: 0 10px 28px rgba(34,29,20,0.14) !important;
         padding: 0.5rem !important;
-        background-color: #ffffff !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    [data-testid="stChatInput"] textarea {
+        color: #221D14 !important;
     }
 
     [data-testid="stChatMessage"] {
         padding: 1.25rem;
-        border-radius: 18px;
+        border-radius: 16px;
         margin-bottom: 1.2rem;
-        font-size: 0.95rem;
-        line-height: 1.6;
+        font-size: 14px;
+        line-height: 1.65;
         animation: slideUp 0.3s ease-out;
     }
     
     [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-        background-color: #ffffff;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        background-color: #FFFFFF;
+        border: 1px solid rgba(34,29,20,0.14);
+        border-radius: 16px 16px 16px 4px;
+        box-shadow: 0 2px 8px rgba(34,29,20,0.03);
+        color: #221D14;
     }
     
     [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-        color: #ffffff;
+        background: linear-gradient(135deg, #25D366, #1DA851);
+        color: #083318;
         border: none;
-        box-shadow: 0 8px 15px -3px rgba(16, 185, 129, 0.25);
+        border-radius: 16px 16px 4px 16px;
+        box-shadow: 0 8px 24px rgba(29,168,81,0.35);
     }
     
     [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) p {
-        color: #ffffff;
+        color: #083318;
     }
     
     @keyframes slideUp {
@@ -106,25 +114,27 @@ st.markdown("""
     
     .hero-header {
         text-align: center;
-        padding: 3rem 1.5rem;
-        background: linear-gradient(135deg, #064e3b 0%, #059669 50%, #10b981 100%);
-        color: white;
-        border-radius: 24px;
+        padding: 40px 38px;
+        background: #FFFFFF;
+        color: #221D14;
+        border: 1px solid rgba(34,29,20,0.14);
+        border-radius: 20px;
         margin-bottom: 2.5rem;
-        box-shadow: 0 15px 30px -5px rgba(5, 150, 105, 0.3);
+        box-shadow: 0 30px 70px rgba(34,29,20,0.3);
     }
     
     .hero-header h1 {
+        font-family: 'Fraunces', serif;
         font-weight: 700;
-        margin-bottom: 0.75rem;
-        color: white;
-        font-size: 2.5rem;
+        margin-bottom: 16px;
+        color: #221D14;
+        font-size: 29px;
         letter-spacing: -0.5px;
     }
     
     .hero-header p {
-        font-size: 1.1rem;
-        opacity: 0.95;
+        font-size: 14.5px;
+        color: #7A7264;
         font-weight: 400;
     }
 
@@ -134,11 +144,12 @@ st.markdown("""
     }
     
     .sidebar-title {
+        font-family: 'Fraunces', serif;
         font-weight: 700;
-        font-size: 2rem;
-        color: #064e3b;
-        margin-top: 1.5rem;
-        letter-spacing: -0.5px;
+        font-size: 21px;
+        color: #221D14;
+        margin-top: 1rem;
+        letter-spacing: 0.2px;
     }
 </style>
 """, unsafe_allow_html=True)
