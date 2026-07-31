@@ -10,7 +10,10 @@ pinned: false
 
 # 🛠️ RepairLink Support Assistant
 
+**Live Demo:** [https://repairlink.streamlit.app/](https://repairlink.streamlit.app/)
+
 This is a modern, WhatsApp-style menu-driven customer support bot built for RepairLink. It uses **Streamlit** for the frontend, **LangChain** and **FAISS** for knowledge retrieval, and **Groq (Llama 3.3 70B)** for lightning-fast AI responses.
+
 
 ## Key Features
 - **WhatsApp-Style Interface:** Custom CSS styling for chat bubbles and intuitive UI.
