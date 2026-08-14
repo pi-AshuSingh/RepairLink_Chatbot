@@ -261,7 +261,7 @@ if "messages" not in st.session_state:
 if "chat_state" not in st.session_state:
     st.session_state.chat_state = "MAIN_MENU"
 
-MAIN_MENU_TEXT = """**Welcome to RepairLink!** 👋\n\nPlease choose an option below or ask me a question directly:\n\n**1️⃣** View our business hours\n**2️⃣** Chat with our Support AI (Free)\n**3️⃣** Find a Local Artisan (Premium)\n**4️⃣** View pricing estimates\n**5️⃣** Login / Access Dashboard\n**6️⃣** About Us & Contact"""
+MAIN_MENU_TEXT = """**Welcome to RepairLink!** 👋\n\nPlease choose an option below or ask me a question directly:\n\n**1️⃣** View our business hours  \n**2️⃣** Chat with our Support AI (Free)  \n**3️⃣** Find a Local Artisan (Premium)  \n**4️⃣** View pricing estimates  \n**5️⃣** Login / Access Dashboard  \n**6️⃣** About Us & Contact"""
 
 if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": MAIN_MENU_TEXT})
