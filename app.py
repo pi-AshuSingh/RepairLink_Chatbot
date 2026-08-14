@@ -21,7 +21,7 @@ st.set_page_config(
     page_title="RepairLink Support", 
     page_icon="🛠️", 
     layout="centered",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 st.markdown("""
@@ -80,17 +80,13 @@ st.markdown("""
 
     [data-testid="stChatMessage"] {
         padding: 1.25rem;
-        border-radius: 16px;
+        border-radius: 16px 16px 16px 4px;
         margin-bottom: 1.2rem;
         font-size: 14px;
         line-height: 1.65;
         animation: slideUp 0.3s ease-out;
-    }
-    
-    [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
         background-color: #FFFFFF;
         border: 1px solid rgba(34,29,20,0.14);
-        border-radius: 16px 16px 16px 4px;
         box-shadow: 0 2px 8px rgba(34,29,20,0.03);
         color: #221D14;
     }
@@ -153,26 +149,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-import base64
-def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-try:
-    logo_base64 = get_base64_of_bin_file("logo.png")
-    img_tag = f'<img src="data:image/png;base64,{logo_base64}" width="120">'
-except Exception:
-    img_tag = '<img src="https://cdn-icons-png.flaticon.com/512/5155/5155761.png" width="90">'
-
-with st.sidebar:
-    st.markdown(f"""
-        <div class="sidebar-container">
-            {img_tag}
-            <div class="sidebar-title">RepairLink</div>
-        </div>
-    """, unsafe_allow_html=True)
 
 @st.cache_resource(show_spinner=False)
 def init_rag_system():
@@ -259,8 +235,21 @@ def format_history(history):
             formatted.append(AIMessage(content=content))
     return formatted
 
-st.markdown("""
+import base64
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+try:
+    logo_base64 = get_base64_of_bin_file("logo.png")
+    img_tag = f'<img src="data:image/png;base64,{logo_base64}" width="100" style="margin-bottom: 0.5rem;">'
+except Exception:
+    img_tag = '<img src="https://cdn-icons-png.flaticon.com/512/5155/5155761.png" width="90" style="margin-bottom: 0.5rem;">'
+
+st.markdown(f"""
 <div class="hero-header">
+    {img_tag}
     <h1>RepairLink Support</h1>
     <p>Seamless repairs, transparent pricing, and trusted local artisans.</p>
 </div>
@@ -278,27 +267,25 @@ if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": MAIN_MENU_TEXT})
 
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
+    avatar = "logo.png" if message["role"] == "assistant" else None
+    with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
 prompt_text = st.chat_input("Type your message here...")
 
 if st.session_state.chat_state == "MAIN_MENU":
-    st.markdown("<br>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     if col1.button("🕒 View Business Hours", use_container_width=True):
         prompt_text = "1"
     if col2.button("🤖 Chat with Support AI (Free)", use_container_width=True):
         prompt_text = "2"
     
-    st.markdown("<br>", unsafe_allow_html=True)
     col3, col4 = st.columns(2)
     if col3.button("💎 Find a Local Artisan (Premium)", use_container_width=True):
         prompt_text = "3"
     if col4.button("💰 View Pricing Estimates", use_container_width=True):
         prompt_text = "4"
         
-    st.markdown("<br>", unsafe_allow_html=True)
     col5, col6 = st.columns(2)
     if col5.button("🔐 Login / Access Dashboard", use_container_width=True):
         prompt_text = "5"
@@ -310,7 +297,7 @@ if prompt_text:
     with st.chat_message("user"):
         st.markdown(prompt_text)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="logo.png"):
         message_placeholder = st.empty()
         response = ""
         
