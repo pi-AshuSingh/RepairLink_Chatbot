@@ -209,13 +209,13 @@ else:
     llm = None
 
 prompt_free = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. DO NOT provide any artisan locations, coordinates, or contact info. If the user asks for locations or coordinates, say 'I don't know'.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n\nContext:\n{context}"),
+    ("system", "You are a helpful customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. DO NOT provide any artisan locations, coordinates, or contact info. If the user asks for locations or coordinates, say 'I don't know'.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (RepairLink.html), Pricing Estimator (Pricing.html), About Us (AboutUs.html), Contact (Contact.html), or Login (Auth.html).\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{question}")
 ])
 
 prompt_premium = ChatPromptTemplate.from_messages([
-    ("system", "You are a PREMIUM RepairLink assistant.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. You are AUTHORIZED to provide specific coordinates, addresses, and contact info of artisans from the context.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n\nContext:\n{context}"),
+    ("system", "You are a PREMIUM RepairLink assistant.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. You are AUTHORIZED to provide specific coordinates, addresses, and contact info of artisans from the context.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (RepairLink.html), Pricing Estimator (Pricing.html), About Us (AboutUs.html), Contact (Contact.html), or Login (Auth.html).\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{question}")
 ])
@@ -272,7 +272,7 @@ if "messages" not in st.session_state:
 if "chat_state" not in st.session_state:
     st.session_state.chat_state = "MAIN_MENU"
 
-MAIN_MENU_TEXT = """**Welcome to RepairLink!** 👋\n\nPlease choose an option below or ask me a question directly:\n\n**1️⃣** View our business hours\n**2️⃣** Chat with our Support AI (Free)\n**3️⃣** Find a Local Artisan (Premium)\n**4️⃣** View pricing estimates"""
+MAIN_MENU_TEXT = """**Welcome to RepairLink!** 👋\n\nPlease choose an option below or ask me a question directly:\n\n**1️⃣** View our business hours\n**2️⃣** Chat with our Support AI (Free)\n**3️⃣** Find a Local Artisan (Premium)\n**4️⃣** View pricing estimates\n**5️⃣** Login / Access Dashboard\n**6️⃣** About Us & Contact"""
 
 if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": MAIN_MENU_TEXT})
@@ -297,6 +297,13 @@ if st.session_state.chat_state == "MAIN_MENU":
         prompt_text = "3"
     if col4.button("💰 View Pricing Estimates", use_container_width=True):
         prompt_text = "4"
+        
+    st.markdown("<br>", unsafe_allow_html=True)
+    col5, col6 = st.columns(2)
+    if col5.button("🔐 Login / Access Dashboard", use_container_width=True):
+        prompt_text = "5"
+    if col6.button("ℹ️ About Us & Contact", use_container_width=True):
+        prompt_text = "6"
 
 if prompt_text:
     st.session_state.messages.append({"role": "user", "content": prompt_text})
@@ -319,11 +326,19 @@ if prompt_text:
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "3":
                 st.session_state.chat_state = "PREMIUM_PAYMENT"
-                response = "💎 **Unlock Artisan Coordinates**\n\nTo view the exact coordinates, locations, and contact details of our trusted local artisans, you must upgrade to Premium.\n\n**Price:** ₹9 (One-time fee)\n\n*(This is a test environment. Type **Pay ₹9** to simulate the payment, or type **0** to cancel and return to the menu)*"
+                response = "💎 **Unlock Artisan Coordinates**\n\nTo view the exact coordinates, locations, and contact details of our trusted local artisans, you must upgrade to Premium.\n\n**Price:** ₹9 (One-time fee)\n\n*(Please go to your [User Dashboard](UserDashboard.html) to scan the QR code and make the payment of ₹9. Once paid, type **Pay ₹9** here to confirm, or type **0** to cancel and return to the menu)*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "4":
-                response = "💰 **RepairLink Pricing Estimates:**\n\nOur psychological pricing architecture scales based on the replacement cost anchor of the item:\n*   **Shoes & Bags:** ₹100 - ₹300\n*   **Clothing Alterations:** ₹100 - ₹250\n*   **Electronics:** ₹1,000 - ₹3,000\n\n*Note: We apply a transparent convenience fee added directly on top of the artisan's quote.*\n\n---\n*Type **0** to return to the main menu.*"
+                response = "💰 **RepairLink Pricing Estimates:**\n\nOur transparent pricing scales based on the issue and device:\n*   **Laptops / PCs:** Screen (₹3k-4.5k), Battery (₹1.8k-2.8k)\n*   **Mobiles:** Screen (₹1.6k-3.4k), Battery (₹1.1k-1.8k)\n*   **Shoes, Bags & Clothes:** ₹100 - ₹300\n\n*Note: We apply a flat ₹50 platform convenience fee on top of the artisan's quote.*\n\nWant to calculate your exact cost? [Try our Pricing Estimator here!](Pricing.html)\n\n---\n*Type **0** to return to the main menu.*"
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            elif prompt_text.strip() == "5":
+                response = "🔐 **Login & Dashboards:**\n\n*   **Customers:** Manage your active repairs and track artisan status in your [User Dashboard](UserDashboard.html).\n*   **Artisans / Kaarigars:** Accept jobs and manage your earnings in the [Kaarigar Dashboard](KaarigarDashboard.html).\n*   **New?** Create an account or sign in on our [Auth page](Auth.html).\n\n---\n*Type **0** to return to the main menu.*"
+                message_placeholder.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            elif prompt_text.strip() == "6":
+                response = "ℹ️ **About Us & Contact:**\n\n**Mend, Don't Replace.** We are mapping local kaarigars—cobblers, mechanics, and tailors—to make repair the first choice.\n\n*   Learn more about our mission on the [About Us](AboutUs.html) page.\n*   Have questions? Reach out via our [Contact Page](Contact.html).\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
@@ -368,7 +383,7 @@ if prompt_text:
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
-                response = "⚠️ **Invalid Input**\n\nTo unlock the artisan coordinates, please type **Pay ₹9** to simulate the payment, or type **0** to cancel."
+                response = "⚠️ **Invalid Input**\n\nTo unlock the artisan coordinates, please pay ₹9 via your [User Dashboard](UserDashboard.html) and then type **Pay ₹9** to verify, or type **0** to cancel."
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
 
