@@ -185,13 +185,13 @@ else:
     llm = None
 
 prompt_free = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful customer support assistant for RepairLink. Our slogan is 'Mat Feko, Fix Karo'.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. DO NOT provide any artisan locations, coordinates, or contact info. If the user asks for locations or coordinates, say 'I don't know'.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (RepairLink.html), Pricing Estimator (Pricing.html), Dashboards (UserDashboard.html/KaarigarDashboard.html) or Login (Auth.html).\n5. Remind users they can earn Waste Points for repairs.\n\nContext:\n{context}"),
+    ("system", "You are a helpful customer support assistant for RepairLink. Our slogan is 'Mat Feko, Fix Karo'.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. DO NOT provide any artisan locations, coordinates, or contact info. If the user asks for locations or coordinates, say 'I don't know'.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (https://repairlink-de1ta.web.app/RepairLink.html), Pricing Estimator (https://repairlink-de1ta.web.app/Pricing.html), Dashboards (https://repairlink-de1ta.web.app/UserDashboard.html or https://repairlink-de1ta.web.app/KaarigarDashboard.html) or Login (https://repairlink-de1ta.web.app/Auth.html).\n5. Remind users they can earn Waste Points for repairs.\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{question}")
 ])
 
 prompt_premium = ChatPromptTemplate.from_messages([
-    ("system", "You are a PREMIUM RepairLink assistant. Our slogan is 'Mat Feko, Fix Karo'.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. You are AUTHORIZED to provide specific coordinates, addresses, and contact info of artisans from the context.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (RepairLink.html), Pricing Estimator (Pricing.html), Dashboards (UserDashboard.html/KaarigarDashboard.html) or Login (Auth.html).\n5. Remind users they can earn Waste Points for repairs.\n\nContext:\n{context}"),
+    ("system", "You are a PREMIUM RepairLink assistant. Our slogan is 'Mat Feko, Fix Karo'.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. You are AUTHORIZED to provide specific coordinates, addresses, and contact info of artisans from the context.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (https://repairlink-de1ta.web.app/RepairLink.html), Pricing Estimator (https://repairlink-de1ta.web.app/Pricing.html), Dashboards (https://repairlink-de1ta.web.app/UserDashboard.html or https://repairlink-de1ta.web.app/KaarigarDashboard.html) or Login (https://repairlink-de1ta.web.app/Auth.html).\n5. Remind users they can earn Waste Points for repairs.\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{question}")
 ])
@@ -309,23 +309,23 @@ if prompt_text:
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "2":
                 st.session_state.chat_state = "PREMIUM_PAYMENT"
-                response = "📍 **Find a Local Kaarigar (Premium)**\n\nTo view the exact coordinates, store locations, and contact details of our verified North Delhi kaarigars, you must pay a tiered connection fee via the Map portal:\n\n*   **Cobbler:** ₹9\n*   **Locksmith / Tailor:** ₹19\n*   **Appliance / Mechanic:** ₹39\n\n*(Please go to your [User Dashboard](UserDashboard.html) to scan the QR code and make the payment. Once paid, type **Pay Done** here to confirm, or type **0** to cancel and return to the menu)*"
+                response = "📍 **Find a Local Kaarigar (Premium)**\n\nTo view the exact coordinates, store locations, and contact details of our verified North Delhi kaarigars, you must pay a tiered connection fee via the Map portal:\n\n*   **Cobbler:** ₹9\n*   **Locksmith / Tailor:** ₹19\n*   **Appliance / Mechanic:** ₹39\n\n*(Please go to your [User Dashboard](https://repairlink-de1ta.web.app/UserDashboard.html) to scan the QR code and make the payment. Once paid, type **Pay Done** here to confirm, or type **0** to cancel and return to the menu)*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "3":
-                response = "💰 **Platform Pricing & Fees:**\n\nOur transparent pricing ensures kaarigars get paid fairly. We only charge a small up-front connection fee based on the service category:\n\n*   **Cobbler:** ₹9\n*   **Locksmith / Tailor:** ₹19\n*   **Appliance / Mechanic:** ₹39\n\nThe actual repair cost (e.g., Screen replacement ₹3k-4.5k) is negotiated directly with the Kaarigar. [View our detailed Pricing page here!](Pricing.html)\n\n---\n*Type **0** to return to the main menu.*"
+                response = "💰 **Platform Pricing & Fees:**\n\nOur transparent pricing ensures kaarigars get paid fairly. We only charge a small up-front connection fee based on the service category:\n\n*   **Cobbler:** ₹9\n*   **Locksmith / Tailor:** ₹19\n*   **Appliance / Mechanic:** ₹39\n\nThe actual repair cost (e.g., Screen replacement ₹3k-4.5k) is negotiated directly with the Kaarigar. [View our detailed Pricing page here!](https://repairlink-de1ta.web.app/Pricing.html)\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "4":
-                response = "🏆 **Eco-Points & Rewards:**\n\nEvery time you repair instead of replace, you earn **Waste Points**! \n\nUnlock progressive levels:\n*   🌱 **Eco-Beginner**\n*   🌿 **Eco-Warrior**\n*   🌳 **Eco-Champion**\n*   🌍 **Eco-Master**\n\nYou can also unlock exclusive Badges for your early support! [Track your eco-impact in your Dashboard](UserDashboard.html).\n\n---\n*Type **0** to return to the main menu.*"
+                response = "🏆 **Eco-Points & Rewards:**\n\nEvery time you repair instead of replace, you earn **Waste Points**! \n\nUnlock progressive levels:\n*   🌱 **Eco-Beginner**\n*   🌿 **Eco-Warrior**\n*   🌳 **Eco-Champion**\n*   🌍 **Eco-Master**\n\nYou can also unlock exclusive Badges for your early support! [Track your eco-impact in your Dashboard](https://repairlink-de1ta.web.app/UserDashboard.html).\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "5":
-                response = "🔐 **Login & Dashboards:**\n\n*   **Customers:** Manage your active repairs and track eco-points in your [User Dashboard](UserDashboard.html).\n*   **Kaarigars:** Manage earnings, respond to reviews, and update your map pin in the [Kaarigar Dashboard](KaarigarDashboard.html).\n*   **New?** Join the movement on our [Auth page](Auth.html).\n\n---\n*Type **0** to return to the main menu.*"
+                response = "🔐 **Login & Dashboards:**\n\n*   **Customers:** Manage your active repairs and track eco-points in your [User Dashboard](https://repairlink-de1ta.web.app/UserDashboard.html).\n*   **Kaarigars:** Manage earnings, respond to reviews, and update your map pin in the [Kaarigar Dashboard](https://repairlink-de1ta.web.app/KaarigarDashboard.html).\n*   **New?** Join the movement on our [Auth page](https://repairlink-de1ta.web.app/Auth.html).\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "6":
-                response = "ℹ️ **About Us & Contact:**\n\n**Mat Feko, Fix Karo.** \nWe are connecting residents of North Delhi to verified local kaarigars—cobblers, mechanics, and tailors—to make repairing the easiest choice for a circular economy.\n\n*   Read about our mission (and hear our custom theme song!) on the [About Us](AboutUs.html) page.\n*   Need help? Reach out via our [Contact Page](Contact.html).\n\n---\n*Type **0** to return to the main menu.*"
+                response = "ℹ️ **About Us & Contact:**\n\n**Mat Feko, Fix Karo.** \nWe are connecting residents of North Delhi to verified local kaarigars—cobblers, mechanics, and tailors—to make repairing the easiest choice for a circular economy.\n\n*   Read about our mission (and hear our custom theme song!) on the [About Us](https://repairlink-de1ta.web.app/AboutUs.html) page.\n*   Need help? Reach out via our [Contact Page](https://repairlink-de1ta.web.app/Contact.html).\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
@@ -370,7 +370,7 @@ if prompt_text:
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
-                response = "⚠️ **Verification Failed**\n\nTo unlock the coordinates, please pay the relevant connection fee via your [User Dashboard](UserDashboard.html) and then type **Pay Done** to verify, or type **0** to cancel."
+                response = "⚠️ **Verification Failed**\n\nTo unlock the coordinates, please pay the relevant connection fee via your [User Dashboard](https://repairlink-de1ta.web.app/UserDashboard.html) and then type **Pay Done** to verify, or type **0** to cancel."
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
 
