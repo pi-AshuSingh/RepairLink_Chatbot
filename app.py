@@ -185,13 +185,13 @@ else:
     llm = None
 
 prompt_free = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful customer support assistant for RepairLink.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. DO NOT provide any artisan locations, coordinates, or contact info. If the user asks for locations or coordinates, say 'I don't know'.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (RepairLink.html), Pricing Estimator (Pricing.html), About Us (AboutUs.html), Contact (Contact.html), or Login (Auth.html).\n\nContext:\n{context}"),
+    ("system", "You are a helpful customer support assistant for RepairLink. Our slogan is 'Mat Feko, Fix Karo'.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. DO NOT provide any artisan locations, coordinates, or contact info. If the user asks for locations or coordinates, say 'I don't know'.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (RepairLink.html), Pricing Estimator (Pricing.html), Dashboards (UserDashboard.html/KaarigarDashboard.html) or Login (Auth.html).\n5. Remind users they can earn Waste Points for repairs.\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{question}")
 ])
 
 prompt_premium = ChatPromptTemplate.from_messages([
-    ("system", "You are a PREMIUM RepairLink assistant.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. You are AUTHORIZED to provide specific coordinates, addresses, and contact info of artisans from the context.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (RepairLink.html), Pricing Estimator (Pricing.html), About Us (AboutUs.html), Contact (Contact.html), or Login (Auth.html).\n\nContext:\n{context}"),
+    ("system", "You are a PREMIUM RepairLink assistant. Our slogan is 'Mat Feko, Fix Karo'.\nCRITICAL RULES:\n1. Answer thoroughly using ONLY the exact information in the context.\n2. You are AUTHORIZED to provide specific coordinates, addresses, and contact info of artisans from the context.\n3. If the answer is not in the context, say 'I'm sorry, I don't have that information right now.'\n4. You may recommend our website pages if relevant: Home (RepairLink.html), Pricing Estimator (Pricing.html), Dashboards (UserDashboard.html/KaarigarDashboard.html) or Login (Auth.html).\n5. Remind users they can earn Waste Points for repairs.\n\nContext:\n{context}"),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{question}")
 ])
@@ -227,7 +227,7 @@ def format_history(history):
     for msg in history:
         role = msg["role"]
         content = msg["content"]
-        if "Welcome to RepairLink" in content or "Type '0'" in content or "1️⃣" in content or "Pay ₹9" in content:
+        if "Welcome to RepairLink" in content or "Type '0'" in content or "1️⃣" in content or "Pay Done" in content:
             continue
         if role == "user":
             formatted.append(HumanMessage(content=content))
@@ -261,7 +261,7 @@ if "messages" not in st.session_state:
 if "chat_state" not in st.session_state:
     st.session_state.chat_state = "MAIN_MENU"
 
-MAIN_MENU_TEXT = """**Welcome to RepairLink!** 👋\n\nPlease choose an option below or ask me a question directly:\n\n**1️⃣** View our business hours  \n**2️⃣** Chat with our Support AI (Free)  \n**3️⃣** Find a Local Artisan (Premium)  \n**4️⃣** View pricing estimates  \n**5️⃣** Login / Access Dashboard  \n**6️⃣** About Us & Contact"""
+MAIN_MENU_TEXT = """**Welcome to RepairLink!** 👋\n\nPlease choose an option below or ask me a question directly:\n\n**1️⃣** Chat with our Support AI (Free)  \n**2️⃣** Find a Local Kaarigar (Premium)  \n**3️⃣** Platform Pricing & Fees  \n**4️⃣** Eco-Points & Rewards  \n**5️⃣** Login / Access Dashboard  \n**6️⃣** About Us & Contact"""
 
 if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": MAIN_MENU_TEXT})
@@ -275,15 +275,15 @@ prompt_text = st.chat_input("Type your message here...")
 
 if st.session_state.chat_state == "MAIN_MENU":
     col1, col2 = st.columns(2)
-    if col1.button("🕒 View Business Hours", use_container_width=True):
+    if col1.button("🤖 Chat with Support AI (Free)", use_container_width=True):
         prompt_text = "1"
-    if col2.button("🤖 Chat with Support AI (Free)", use_container_width=True):
+    if col2.button("📍 Find a Local Kaarigar (Premium)", use_container_width=True):
         prompt_text = "2"
     
     col3, col4 = st.columns(2)
-    if col3.button("💎 Find a Local Artisan (Premium)", use_container_width=True):
+    if col3.button("💰 Platform Pricing & Fees", use_container_width=True):
         prompt_text = "3"
-    if col4.button("💰 View Pricing Estimates", use_container_width=True):
+    if col4.button("🏆 Eco-Points & Rewards", use_container_width=True):
         prompt_text = "4"
         
     col5, col6 = st.columns(2)
@@ -303,29 +303,29 @@ if prompt_text:
         
         if st.session_state.chat_state == "MAIN_MENU":
             if prompt_text.strip() == "1":
-                response = "🕒 **Our Business Hours:**\n\n*   **Monday - Saturday:** 9:00 AM - 7:00 PM\n*   **Sunday:** Closed\n\n---\n*Type **0** to return to the main menu.*"
+                st.session_state.chat_state = "CUSTOM_QUESTION"
+                response = "🤖 **Support AI Connected!** \n\n*Mat Feko, Fix Karo!* I can help answer questions about our services, eco-rewards, and policies. *(Note: Exact Kaarigar coordinates are only available in Premium)*\n\nWhat would you like to know?\n\n---\n*Type **0** anytime to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "2":
-                st.session_state.chat_state = "CUSTOM_QUESTION"
-                response = "🤖 **Support AI Connected!** \n\nI can help answer questions about our services and policies. *(Note: Artisan coordinates are only available in Premium)*\n\nWhat would you like to know?\n\n---\n*Type **0** anytime to return to the main menu.*"
+                st.session_state.chat_state = "PREMIUM_PAYMENT"
+                response = "📍 **Find a Local Kaarigar (Premium)**\n\nTo view the exact coordinates, store locations, and contact details of our verified North Delhi kaarigars, you must pay a tiered connection fee via the Map portal:\n\n*   **Cobbler:** ₹9\n*   **Locksmith / Tailor:** ₹19\n*   **Appliance / Mechanic:** ₹39\n\n*(Please go to your [User Dashboard](UserDashboard.html) to scan the QR code and make the payment. Once paid, type **Pay Done** here to confirm, or type **0** to cancel and return to the menu)*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "3":
-                st.session_state.chat_state = "PREMIUM_PAYMENT"
-                response = "💎 **Unlock Artisan Coordinates**\n\nTo view the exact coordinates, locations, and contact details of our trusted local artisans, you must upgrade to Premium.\n\n**Price:** ₹9 (One-time fee)\n\n*(Please go to your [User Dashboard](UserDashboard.html) to scan the QR code and make the payment of ₹9. Once paid, type **Pay ₹9** here to confirm, or type **0** to cancel and return to the menu)*"
+                response = "💰 **Platform Pricing & Fees:**\n\nOur transparent pricing ensures kaarigars get paid fairly. We only charge a small up-front connection fee based on the service category:\n\n*   **Cobbler:** ₹9\n*   **Locksmith / Tailor:** ₹19\n*   **Appliance / Mechanic:** ₹39\n\nThe actual repair cost (e.g., Screen replacement ₹3k-4.5k) is negotiated directly with the Kaarigar. [View our detailed Pricing page here!](Pricing.html)\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "4":
-                response = "💰 **RepairLink Pricing Estimates:**\n\nOur transparent pricing scales based on the issue and device:\n*   **Laptops / PCs:** Screen (₹3k-4.5k), Battery (₹1.8k-2.8k)\n*   **Mobiles:** Screen (₹1.6k-3.4k), Battery (₹1.1k-1.8k)\n*   **Shoes, Bags & Clothes:** ₹100 - ₹300\n\n*Note: We apply a flat ₹50 platform convenience fee on top of the artisan's quote.*\n\nWant to calculate your exact cost? [Try our Pricing Estimator here!](Pricing.html)\n\n---\n*Type **0** to return to the main menu.*"
+                response = "🏆 **Eco-Points & Rewards:**\n\nEvery time you repair instead of replace, you earn **Waste Points**! \n\nUnlock progressive levels:\n*   🌱 **Eco-Beginner**\n*   🌿 **Eco-Warrior**\n*   🌳 **Eco-Champion**\n*   🌍 **Eco-Master**\n\nYou can also unlock exclusive Badges for your early support! [Track your eco-impact in your Dashboard](UserDashboard.html).\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "5":
-                response = "🔐 **Login & Dashboards:**\n\n*   **Customers:** Manage your active repairs and track artisan status in your [User Dashboard](UserDashboard.html).\n*   **Artisans / Kaarigars:** Accept jobs and manage your earnings in the [Kaarigar Dashboard](KaarigarDashboard.html).\n*   **New?** Create an account or sign in on our [Auth page](Auth.html).\n\n---\n*Type **0** to return to the main menu.*"
+                response = "🔐 **Login & Dashboards:**\n\n*   **Customers:** Manage your active repairs and track eco-points in your [User Dashboard](UserDashboard.html).\n*   **Kaarigars:** Manage earnings, respond to reviews, and update your map pin in the [Kaarigar Dashboard](KaarigarDashboard.html).\n*   **New?** Join the movement on our [Auth page](Auth.html).\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             elif prompt_text.strip() == "6":
-                response = "ℹ️ **About Us & Contact:**\n\n**Mend, Don't Replace.** We are mapping local kaarigars—cobblers, mechanics, and tailors—to make repair the first choice.\n\n*   Learn more about our mission on the [About Us](AboutUs.html) page.\n*   Have questions? Reach out via our [Contact Page](Contact.html).\n\n---\n*Type **0** to return to the main menu.*"
+                response = "ℹ️ **About Us & Contact:**\n\n**Mat Feko, Fix Karo.** \nWe are connecting residents of North Delhi to verified local kaarigars—cobblers, mechanics, and tailors—to make repairing the easiest choice for a circular economy.\n\n*   Read about our mission (and hear our custom theme song!) on the [About Us](AboutUs.html) page.\n*   Need help? Reach out via our [Contact Page](Contact.html).\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
@@ -364,13 +364,13 @@ if prompt_text:
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.rerun()
-            elif prompt_text.strip().lower() == "pay ₹9":
+            elif prompt_text.strip().lower() in ["pay done", "pay", "done"]:
                 st.session_state.chat_state = "PREMIUM_CHAT"
-                response = "✅ **Payment Successful!**\n\nYou are now connected to the **Premium Artisan Finder**. I can provide direct coordinates and contact details for our certified artisans. What location or service are you looking for?\n\n---\n*Type **0** to return to the main menu.*"
+                response = "✅ **Verification Successful!**\n\nYou are now connected to the **Premium Kaarigar Finder**. I can provide direct coordinates and contact details for our certified North Delhi artisans. What service are you looking for today?\n\n---\n*Type **0** to return to the main menu.*"
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
-                response = "⚠️ **Invalid Input**\n\nTo unlock the artisan coordinates, please pay ₹9 via your [User Dashboard](UserDashboard.html) and then type **Pay ₹9** to verify, or type **0** to cancel."
+                response = "⚠️ **Verification Failed**\n\nTo unlock the coordinates, please pay the relevant connection fee via your [User Dashboard](UserDashboard.html) and then type **Pay Done** to verify, or type **0** to cancel."
                 message_placeholder.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
 
