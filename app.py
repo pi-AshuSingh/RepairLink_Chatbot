@@ -235,7 +235,7 @@ def format_history(history):
             formatted.append(HumanMessage(content=content))
         elif role == "assistant":
             formatted.append(AIMessage(content=content))
-    return formatted
+    return formatted[-10:]
 
 import base64
 def get_base64_of_bin_file(bin_file):
@@ -340,7 +340,10 @@ if prompt_text:
                 if free_rag_chain:
                     try:
                         with st.spinner("Finding the best answer..."):
-                            rag_response = free_rag_chain.invoke(inputs)
+                            rag_response = ""
+                            for chunk in free_rag_chain.stream(inputs):
+                                rag_response += chunk
+                                message_placeholder.markdown(rag_response + "▌")
                         
                         if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
                             try:
@@ -394,7 +397,10 @@ if prompt_text:
                 if chain_to_use:
                     try:
                         with st.spinner("Finding the best answer..."):
-                            rag_response = chain_to_use.invoke(inputs)
+                            rag_response = ""
+                            for chunk in chain_to_use.stream(inputs):
+                                rag_response += chunk
+                                message_placeholder.markdown(rag_response + "▌")
                         
                         if isinstance(rag_response, str) and rag_response.strip().startswith("[{'text':"):
                             try:
