@@ -157,6 +157,8 @@ def init_rag_system():
     if os.path.exists(KNOWLEDGE_BASE):
         try:
             documents = PyPDFLoader(KNOWLEDGE_BASE).load()
+            for doc in documents:
+                doc.page_content = doc.page_content.replace('  ', '<SPACE>').replace(' ', '').replace('<SPACE>', ' ')
         except Exception:
             pass
             
