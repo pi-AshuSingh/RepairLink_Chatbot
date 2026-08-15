@@ -152,7 +152,7 @@ st.markdown("""
 
 @st.cache_resource(show_spinner=False)
 def init_rag_system():
-    KNOWLEDGE_BASE = "RepairLink_KnowledgeBase_V3.pdf"
+    KNOWLEDGE_BASE = "RepairLink_KnowledgeBase_RAG.pdf"
     documents = []
     if os.path.exists(KNOWLEDGE_BASE):
         try:
