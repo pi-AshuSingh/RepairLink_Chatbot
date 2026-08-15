@@ -267,7 +267,7 @@ if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": MAIN_MENU_TEXT})
 
 for message in st.session_state.messages:
-    avatar = "logo.png" if message["role"] == "assistant" else None
+    avatar = "logo.png" if message["role"] == "assistant" else "👤"
     with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
@@ -294,7 +294,7 @@ if st.session_state.chat_state == "MAIN_MENU":
 
 if prompt_text:
     st.session_state.messages.append({"role": "user", "content": prompt_text})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="👤"):
         st.markdown(prompt_text)
 
     with st.chat_message("assistant", avatar="logo.png"):
